@@ -25,5 +25,9 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     compile 'com.android.support:appcompat-v7:24.2.1'
+    compile 'com.android.support:support-v4:24.2.1'
     testCompile 'junit:junit:4.12'
+    //For getting meta data from the mp3 files uses the MIT licence
+    //link: https://github.com/mpatric/mp3agic
+    compile 'com.mpatric:mp3agic:0.8.3'
 }

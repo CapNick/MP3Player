@@ -4,15 +4,20 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.util.Log;
 import java.io.IOException;
+import com.mpatric.mp3agic.*;
 
 /**
  * Created by pszmdf on 06/11/16.
+ * Modifiec by psynh1 on 10/11/16
  */
 public class MP3Player {
+
+    //lets make this a singleton shall we
 
     protected MediaPlayer mediaPlayer;
     protected MP3PlayerState state;
     protected String filePath;
+    protected Mp3File mp3File;
 
     public enum MP3PlayerState {
         ERROR,
@@ -33,6 +38,16 @@ public class MP3Player {
         this.filePath = filePath;
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
+        try {
+            mp3File = new Mp3File(filePath);
+        } catch (InvalidDataException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (UnsupportedTagException e) {
+            e.printStackTrace();
+        }
 
         try{
             mediaPlayer.setDataSource(filePath);
@@ -89,4 +104,41 @@ public class MP3Player {
             mediaPlayer = null;
         }
     }
+
+//    //--------------------------------------Expanded Features---------------------------------------
+//
+//    public long getLength(){
+//        return mp3File.getLengthInSeconds();
+//    }
+//
+//    public String getTitle(){
+//        if (mp3File.hasId3v1Tag()){
+//            return mp3File.getId3v1Tag().getTitle();
+//        }
+//        return "";
+//    }
+//
+//    public String getArtist(){
+//        if (mp3File.hasId3v1Tag()){
+//            return mp3File.getId3v1Tag().getArtist();
+//        }
+//        return "";
+//    }
+//
+//    public String getAlbum(){
+//        if (mp3File.hasId3v1Tag()){
+//            return mp3File.getId3v1Tag().getAlbum();
+//        }
+//        return "";
+//    }
+//
+//    public byte[] getArtwork(){
+//        if (mp3File.hasId3v2Tag()){
+//            byte [] imageData = mp3File.getId3v2Tag().getAlbumImage();
+//            if (imageData != null){
+//                return imageData;
+//            }
+//        }
+//        return null;
+//    }
 }
