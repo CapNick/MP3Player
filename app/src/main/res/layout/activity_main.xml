@@ -10,37 +10,97 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:weightSum="1"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true">
 
         <ListView
             android:layout_width="match_parent"
-            android:layout_height="463dp"
-            android:id="@+id/musicList"
-            style="@android:style/Widget.DeviceDefault.ExpandableListView" />
+            android:layout_height="wrap_content"
+            android:id="@+id/trackList"
+            style="@android:style/Widget.DeviceDefault.ExpandableListView"
+            android:layout_weight="1" />
+
+        <TextView
+            android:text="Track:"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView"
+            android:textAlignment="center" />
+
+        <TextView
+            android:text="None"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/trackTitle"
+            android:textAlignment="center" />
 
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:id="@+id/musicControls">
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp">
 
-            <Button
-                android:text="Button"
+            <TextView
+                android:layout_height="wrap_content"
+                android:id="@+id/timeProgressed"
+                android:layout_marginLeft="10dp"
+                android:textAlignment="center"
+                android:text="00:00"
+                android:textSize="12sp"
+                android:layout_width="40dp" />
+
+            <ProgressBar
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/playPauseButton"
-                android:layout_weight="1" />
+                android:id="@+id/trackProgress"
+                android:layout_weight="1"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp" />
 
+            <TextView
+                android:layout_height="wrap_content"
+                android:id="@+id/timeTotal"
+                android:layout_marginRight="10dp"
+                android:textAlignment="center"
+                android:text="00:00"
+                android:textSize="12sp"
+                android:layout_width="40dp" />
         </LinearLayout>
 
-        <ProgressBar
-            style="?android:attr/progressBarStyleHorizontal"
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/trackProgress"
-            android:layout_weight="1" />
+            android:id="@+id/musicControls"
+            android:layout_height="wrap_content">
+
+            <Button
+                android:text="Pause"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/pauseButton"
+                android:layout_weight="1"
+                android:onClick="pauseTrack" />
+
+            <Button
+                android:text="Play"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/PlayButton"
+                android:layout_weight="1"
+                android:onClick="playTrack" />
+
+            <Button
+                android:text="Stop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/stopButton"
+                android:layout_weight="1"
+                android:onClick="stopTrack" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

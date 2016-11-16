@@ -13,6 +13,8 @@ import com.mpatric.mp3agic.*;
 public class MP3Player {
 
     //lets make this a singleton shall we
+//    private static final MP3Player instance = new MP3Player();
+
 
     protected MediaPlayer mediaPlayer;
     protected MP3PlayerState state;
@@ -25,6 +27,10 @@ public class MP3Player {
         PAUSED,
         STOPPED
     }
+
+//    public static MP3Player getInstance(){
+//        return instance;
+//    }
 
     public MP3Player() {
         this.state = MP3PlayerState.STOPPED;
