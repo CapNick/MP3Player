@@ -19,37 +19,42 @@
             android:layout_height="wrap_content"
             android:id="@+id/trackList"
             style="@android:style/Widget.DeviceDefault.ExpandableListView"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:choiceMode="singleChoice"
+            android:listSelector="?attr/colorButtonNormal"
+            />
 
         <TextView
-            android:text="Track:"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/textView"
-            android:textAlignment="center" />
-
-        <TextView
-            android:text="None"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/trackTitle"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:textStyle="normal|bold"
+            android:background="?android:attr/colorButtonNormal"
+            android:paddingTop="10dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/currentArtist"
+            android:textAlignment="center"
+            android:background="?android:attr/colorButtonNormal"
+            android:paddingBottom="10dp" />
 
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp">
+            android:background="?android:attr/colorButtonNormal">
 
             <TextView
                 android:layout_height="wrap_content"
                 android:id="@+id/timeProgressed"
-                android:layout_marginLeft="10dp"
                 android:textAlignment="center"
                 android:text="00:00"
                 android:textSize="12sp"
-                android:layout_width="40dp" />
+                android:layout_width="40dp"
+                android:layout_marginLeft="10dp" />
 
             <ProgressBar
                 style="@style/Widget.AppCompat.ProgressBar.Horizontal"
@@ -74,15 +79,17 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:id="@+id/musicControls"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:background="?android:attr/colorButtonNormal"
+            android:paddingTop="10dp">
 
             <Button
                 android:text="Pause"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/pauseButton"
+                android:id="@+id/pauseTrackButton"
                 android:layout_weight="1"
-                android:onClick="pauseTrack" />
+                android:onClick="pauseTrackButton" />
 
             <Button
                 android:text="Play"
@@ -90,15 +97,15 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/PlayButton"
                 android:layout_weight="1"
-                android:onClick="playTrack" />
+                android:onClick="playTrackButton" />
 
             <Button
                 android:text="Stop"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/stopButton"
+                android:id="@+id/stopTrackButton"
                 android:layout_weight="1"
-                android:onClick="stopTrack" />
+                android:onClick="stopTrackButton" />
 
         </LinearLayout>
 

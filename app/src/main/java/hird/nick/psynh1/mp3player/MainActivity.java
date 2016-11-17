@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Color;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
@@ -31,14 +32,15 @@ import com.mpatric.mp3agic.UnsupportedTagException;
 public class MainActivity extends AppCompatActivity {
 
 
-    //Service
+    //Bound Service
     MusicService musicService;
     boolean isBound = false;
 
     //Music Tracks
     private ListView trackList;
-    private ProgressBar trackProgrss;
-    private TextView trackSelectedName;
+    private ProgressBar trackProgress;
+    private TextView trackSelectedTitle;
+    private TextView trackSelectedArtist;
     private TextView timeProgressed;
     private TextView timeTotal;
 
@@ -51,72 +53,49 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         initializeWidgets();
         Intent intent = new Intent(this, MusicService.class);
-        bindService(intent, musicConnection, Context.BIND_AUTO_CREATE);
-        setupProgressBar();
-    }
-    @Override
-    protected void onStop() {
-        super.onStop();
-        if(isBound){
-            musicService.getMp3Player().stop();
-            unbindService(musicConnection);
+        if (!isBound){
+            bindService(intent, musicConnection, Context.BIND_AUTO_CREATE);
         }
+
+        setupProgressBarThread();
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onDestroy() {
+        super.onDestroy();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
 
     //Play Button
-    public void playTrack(View v){
+    public void playTrackButton(View v){
         musicService.getMp3Player().play();
-        if(trackThread != null && musicService.getMp3Player().getState() == MP3Player.MP3PlayerState.PAUSED){
-            Log.d("Thread: ","resuming for play");
-            trackThread.notify();
-        }
     }
     //Pause Button
-    public void pauseTrack(View v){
+    public void pauseTrackButton(View v){
         musicService.getMp3Player().pause();
-        if(trackThread != null && musicService.getMp3Player().getState() == MP3Player.MP3PlayerState.PLAYING){
-            try {
-                Log.d("Thread: ","waiting due to stop");
-                trackThread.wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-        }
     }
-    //Stop Button
-    public void stopTrack(View v){
-        trackSelectedName.setText("None");
-        musicService.getMp3Player().stop();
-        if(trackThread != null && musicService.getMp3Player().getState() == MP3Player.MP3PlayerState.PLAYING) {
-            //checking if the payer is either playing  so we dont try pausing the
-            // thread while its already paused for nothing
-            try {
-                Log.d("Thread:"," waiting due to stop");
-                trackThread.wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
 
-        }
+    public void stopTrackButton(View v){
+        stopTrack();
+    }
+
+    //Stop Button
+    private void stopTrack(){
+        musicService.getMp3Player().stop();
+//        clearing the playing track from the itemlist
+        trackSelectedTitle.setText("");
+        trackSelectedArtist.setText("");
+        timeProgressed.setText("00:00");
+        timeTotal.setText("00:00");
     }
 
     private void initializeWidgets(){
         File musicDir;
         File[] list;
         trackList = (ListView) findViewById(R.id.trackList);
-        trackProgrss = (ProgressBar) findViewById(R.id.trackProgress);
-        trackSelectedName = (TextView) findViewById(R.id.trackTitle);
+        trackProgress = (ProgressBar) findViewById(R.id.trackProgress);
+        trackSelectedTitle = (TextView) findViewById(R.id.trackTitle);
+        trackSelectedArtist = (TextView) findViewById(R.id.currentArtist);
         timeProgressed = (TextView) findViewById(R.id.timeProgressed);
         timeTotal = (TextView) findViewById(R.id.timeTotal);
 
@@ -143,28 +122,34 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadTrack(String trackPath) {
         //Get the mp3's length in milliseconds and set the track progress maximum to it
-
         musicService.getMp3Player().stop();
         musicService.getMp3Player().load(trackPath);
         if (musicService.getMp3Player().getState() != MP3Player.MP3PlayerState.ERROR){
             try {
                 Mp3File track = new Mp3File(trackPath);
-                trackProgrss.setMax((int) track.getLengthInMilliseconds());
-                timeTotal.setText(""+track.getLengthInMilliseconds()/1000);
+                trackProgress.setMax((int) track.getLengthInMilliseconds());
+
+                int seconds = (int) track.getLengthInSeconds() % 60;
+                int minutes = (int) track.getLengthInSeconds() / 60;
+                timeTotal.setText(String.format("%02d:%02d", minutes, seconds));
+
                 if (track.hasId3v1Tag()){
-                    trackSelectedName.setText(track.getId3v1Tag().getTitle());
+                    trackSelectedTitle.setText(track.getId3v1Tag().getTitle());
+                    trackSelectedArtist.setText(track.getId3v1Tag().getArtist());
                 }
+
                 else if (track.hasId3v2Tag()){
-                    trackSelectedName.setText(track.getId3v2Tag().getTitle());
+                    trackSelectedTitle.setText(track.getId3v2Tag().getTitle());
+                    trackSelectedArtist.setText(track.getId3v2Tag().getArtist());
                 }
+
                 else {
-                    trackSelectedName.setText("Unknown");
+                    trackSelectedTitle.setText("Unknown");
                 }
             } catch (IOException | UnsupportedTagException | InvalidDataException e) {
                 e.printStackTrace();
             }
         }
-        trackThread.start();
     }
 
     private ServiceConnection musicConnection = new ServiceConnection() {
@@ -174,7 +159,6 @@ public class MainActivity extends AppCompatActivity {
             musicService = binder.getService();
             isBound = true;
         }
-
         @Override
         public void onServiceDisconnected(ComponentName name) {
             isBound = false;
@@ -182,16 +166,23 @@ public class MainActivity extends AppCompatActivity {
     };
 
     //Thread related stuff
-    private Handler handler = new Handler(){
+    private Handler handler = new Handler(new Handler.Callback() {
         @Override
-        public void handleMessage(Message msg) {
-            trackProgrss.setProgress(musicService.getMp3Player().getProgress());
-            timeProgressed.setText(""+musicService.getMp3Player().getProgress()/1000);
+        public boolean handleMessage(Message msg) {
+            if(musicService.getMp3Player().getProgress() < trackProgress.getMax()){
+                trackProgress.setProgress(musicService.getMp3Player().getProgress());
+                int seconds = (musicService.getMp3Player().getProgress()/1000) % 60;
+                int minutes = (musicService.getMp3Player().getProgress()/1000) / 60;
+                timeProgressed.setText(String.format("%02d:%02d", minutes, seconds));
+            }else{
+                stopTrack();
+            }
+            return true;
         }
-    };
+    });
 
-    private void setupProgressBar(){
-        Runnable r = new Runnable() {
+    private void setupProgressBarThread(){
+        Runnable runnableThread = new Runnable() {
             @Override
             public void run() {
                 while (true){
@@ -205,8 +196,9 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         if(trackThread == null){
-            trackThread = new Thread(r);
-            Log.d("Thread:","Track Progress: "+trackThread.getName());
+            trackThread = new Thread(runnableThread);
+            trackThread.start();
         }
+        Log.d("Thread:","Track Progress: "+trackThread.getName());
     }
 }

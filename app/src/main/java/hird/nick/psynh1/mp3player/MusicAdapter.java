@@ -57,8 +57,10 @@ class MusicAdapter extends ArrayAdapter {
                 trackTitle.setText("Unkown");
                 trackArtist.setText("Unkown");
             }
-            trackDuration.setText(String.format("%d's",mp3File.getLengthInSeconds()));
+            int seconds = (int)mp3File.getLengthInSeconds() % 60;
+            int minutes = (int)mp3File.getLengthInSeconds() / 60;
 
+            trackDuration.setText(String.format("%02d:%02d",minutes,seconds));
         } catch (IOException | InvalidDataException | UnsupportedTagException e) {
             e.printStackTrace();
         }
