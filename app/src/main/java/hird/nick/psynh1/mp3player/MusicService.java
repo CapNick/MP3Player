@@ -1,17 +1,19 @@
 package hird.nick.psynh1.mp3player;
 
-import android.app.IntentService;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.content.Context;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.util.Log;
+import android.support.v7.app.NotificationCompat;
 
 
 public class MusicService extends Service {
+
+    private final IBinder musicServiceBinder = new MusicServiceBinder();
+    private final static int notificationID = 20442244;
+    NotificationCompat.Builder notification;
+    private MP3Player mp3Player;
 
     //Binder
     public class MusicServiceBinder extends Binder {
@@ -20,12 +22,10 @@ public class MusicService extends Service {
         }
     }
 
-    //The rest of the service
-    private final IBinder musicServiceBinder = new MusicServiceBinder();
-    private MP3Player mp3Player;
-
     public MusicService() {
         mp3Player = new MP3Player();
+        notification = new NotificationCompat.Builder(this);
+        setupMusicNotification();
     }
 
     public MP3Player getMp3Player(){
@@ -38,6 +38,10 @@ public class MusicService extends Service {
         return musicServiceBinder;
     }
 
+    private void setupMusicNotification () {
+        notification.setSmallIcon(R.mipmap.ic_launcher);
+        notification.setTicker("");
+    }
 
 
 }

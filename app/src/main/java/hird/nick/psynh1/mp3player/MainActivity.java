@@ -1,11 +1,12 @@
 package hird.nick.psynh1.mp3player;
 
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.graphics.Color;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
@@ -23,14 +24,14 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import hird.nick.psynh1.mp3player.MusicService.MusicServiceBinder;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
 
+import hird.nick.psynh1.mp3player.MusicService.MusicServiceBinder;
+
 
 public class MainActivity extends AppCompatActivity {
-
 
     //Bound Service
     MusicService musicService;
@@ -56,13 +57,17 @@ public class MainActivity extends AppCompatActivity {
         if (!isBound){
             bindService(intent, musicConnection, Context.BIND_AUTO_CREATE);
         }
-
         setupProgressBarThread();
+
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (musicConnection != null) {
+            unbindService(musicConnection);
+            musicConnection = null;
+        }
     }
 
 
@@ -107,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
             ListAdapter musicAdapter = new MusicAdapter(this, list);
 
             trackList.setAdapter(musicAdapter);
+//            trackList.setAdapter(new ArrayAdapter<File>(this, android.R.layout.simple_list_item_1, list)  );
             trackList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 public void onItemClick(AdapterView<?> myAdapter, View myView, int myItemInt, long mylng) {
                     File selectedFromList =(File) (trackList.getItemAtPosition(myItemInt));
@@ -127,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
         if (musicService.getMp3Player().getState() != MP3Player.MP3PlayerState.ERROR){
             try {
                 Mp3File track = new Mp3File(trackPath);
-                trackProgress.setMax((int) track.getLengthInMilliseconds());
+                trackProgress.setMax((int) track.getLengthInSeconds());
 
                 int seconds = (int) track.getLengthInSeconds() % 60;
                 int minutes = (int) track.getLengthInSeconds() / 60;
@@ -136,15 +142,20 @@ public class MainActivity extends AppCompatActivity {
                 if (track.hasId3v1Tag()){
                     trackSelectedTitle.setText(track.getId3v1Tag().getTitle());
                     trackSelectedArtist.setText(track.getId3v1Tag().getArtist());
+                    //set notification
+
                 }
 
                 else if (track.hasId3v2Tag()){
                     trackSelectedTitle.setText(track.getId3v2Tag().getTitle());
                     trackSelectedArtist.setText(track.getId3v2Tag().getArtist());
+                    //set notification
+
                 }
 
                 else {
                     trackSelectedTitle.setText("Unknown");
+                    trackSelectedArtist.setText("Unknown");
                 }
             } catch (IOException | UnsupportedTagException | InvalidDataException e) {
                 e.printStackTrace();
@@ -169,8 +180,8 @@ public class MainActivity extends AppCompatActivity {
     private Handler handler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
-            if(musicService.getMp3Player().getProgress() < trackProgress.getMax()){
-                trackProgress.setProgress(musicService.getMp3Player().getProgress());
+            if((musicService.getMp3Player().getProgress() / 1000) < trackProgress.getMax()){
+                trackProgress.setProgress(musicService.getMp3Player().getProgress() / 1000);
                 int seconds = (musicService.getMp3Player().getProgress()/1000) % 60;
                 int minutes = (musicService.getMp3Player().getProgress()/1000) / 60;
                 timeProgressed.setText(String.format("%02d:%02d", minutes, seconds));
@@ -201,4 +212,5 @@ public class MainActivity extends AppCompatActivity {
         }
         Log.d("Thread:","Track Progress: "+trackThread.getName());
     }
+
 }
