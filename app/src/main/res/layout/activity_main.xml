@@ -19,10 +19,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/trackList"
             style="@android:style/Widget.DeviceDefault.ExpandableListView"
-            android:layout_weight="1"
-            android:choiceMode="singleChoice"
-            android:listSelector="?attr/colorButtonNormal"
-            />
+            android:layout_weight="1" />
 
         <TextView
             android:layout_width="match_parent"
@@ -56,8 +53,7 @@
                 android:layout_width="40dp"
                 android:layout_marginLeft="10dp" />
 
-            <ProgressBar
-                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            <SeekBar
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/trackProgress"

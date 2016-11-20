@@ -99,6 +99,14 @@ public class MP3Player {
             state = MP3PlayerState.PAUSED;
         }
     }
+    //for a seekbar to get to a specific part of the song
+    public void setProgress(int progress){
+        if(mediaPlayer!=null) {
+            if (this.state == MP3PlayerState.PLAYING || this.state == MP3PlayerState.PAUSED) {
+                mediaPlayer.seekTo(progress);
+            }
+        }
+    }
 
     public void stop() {
         if(mediaPlayer!=null) {

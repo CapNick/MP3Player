@@ -1,32 +1,30 @@
 package hird.nick.psynh1.mp3player;
 
 
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
-import java.io.File;
-import java.io.IOException;
-
-import android.view.View;
-import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
+
+import java.io.File;
+import java.io.IOException;
 
 import hird.nick.psynh1.mp3player.MusicService.MusicServiceBinder;
 
@@ -39,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
 
     //Music Tracks
     private ListView trackList;
-    private ProgressBar trackProgress;
+    private SeekBar trackProgress;
     private TextView trackSelectedTitle;
     private TextView trackSelectedArtist;
     private TextView timeProgressed;
@@ -47,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
 
     //Private thread
     private Thread trackThread;
+    boolean isSeekBarSelected = false;
+    boolean isActivityActive = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,21 +55,20 @@ public class MainActivity extends AppCompatActivity {
         initializeWidgets();
         Intent intent = new Intent(this, MusicService.class);
         if (!isBound){
+            this.startService(intent);
             bindService(intent, musicConnection, Context.BIND_AUTO_CREATE);
         }
-        setupProgressBarThread();
+        Log.d("MainActivity", "onCreate"+musicService);
 
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (musicConnection != null) {
+        if (isBound){
             unbindService(musicConnection);
-            musicConnection = null;
         }
     }
-
 
     //Play Button
     public void playTrackButton(View v){
@@ -98,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
         File musicDir;
         File[] list;
         trackList = (ListView) findViewById(R.id.trackList);
-        trackProgress = (ProgressBar) findViewById(R.id.trackProgress);
+        trackProgress = (SeekBar) findViewById(R.id.trackProgress);
         trackSelectedTitle = (TextView) findViewById(R.id.trackTitle);
         trackSelectedArtist = (TextView) findViewById(R.id.currentArtist);
         timeProgressed = (TextView) findViewById(R.id.timeProgressed);
@@ -124,42 +123,60 @@ public class MainActivity extends AppCompatActivity {
         }catch (NullPointerException e){
             Log.e("Error", e.toString());
         }
+
+        trackProgress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                updateTimeText();
+            }
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                isSeekBarSelected = true;
+            }
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                musicService.getMp3Player().setProgress(seekBar.getProgress()*1000);
+                isSeekBarSelected = false;
+            }
+        });
+
     }
 
     private void loadTrack(String trackPath) {
-        //Get the mp3's length in milliseconds and set the track progress maximum to it
         musicService.getMp3Player().stop();
         musicService.getMp3Player().load(trackPath);
         if (musicService.getMp3Player().getState() != MP3Player.MP3PlayerState.ERROR){
-            try {
-                Mp3File track = new Mp3File(trackPath);
-                trackProgress.setMax((int) track.getLengthInSeconds());
+            setupTrackInfo();
+        }
+    }
 
-                int seconds = (int) track.getLengthInSeconds() % 60;
-                int minutes = (int) track.getLengthInSeconds() / 60;
-                timeTotal.setText(String.format("%02d:%02d", minutes, seconds));
+    private void setupTrackInfo() {
+        try {
+            Mp3File track = new Mp3File(musicService.getMp3Player().getFilePath());
+            //Get the mp3's length in milliseconds and set the track progress maximum to it
 
-                if (track.hasId3v1Tag()){
-                    trackSelectedTitle.setText(track.getId3v1Tag().getTitle());
-                    trackSelectedArtist.setText(track.getId3v1Tag().getArtist());
-                    //set notification
+            trackProgress.setMax((int) track.getLengthInSeconds());
 
-                }
+            int seconds = (int) track.getLengthInSeconds() % 60;
+            int minutes = (int) track.getLengthInSeconds() / 60;
+            timeTotal.setText(String.format("%02d:%02d", minutes, seconds));
 
-                else if (track.hasId3v2Tag()){
-                    trackSelectedTitle.setText(track.getId3v2Tag().getTitle());
-                    trackSelectedArtist.setText(track.getId3v2Tag().getArtist());
-                    //set notification
-
-                }
-
-                else {
-                    trackSelectedTitle.setText("Unknown");
-                    trackSelectedArtist.setText("Unknown");
-                }
-            } catch (IOException | UnsupportedTagException | InvalidDataException e) {
-                e.printStackTrace();
+            if (track.hasId3v1Tag()){
+                trackSelectedTitle.setText(track.getId3v1Tag().getTitle());
+                trackSelectedArtist.setText(track.getId3v1Tag().getArtist());
             }
+
+            else if (track.hasId3v2Tag()){
+                trackSelectedTitle.setText(track.getId3v2Tag().getTitle());
+                trackSelectedArtist.setText(track.getId3v2Tag().getArtist());
+            }
+
+            else {
+                trackSelectedTitle.setText("Unknown");
+                trackSelectedArtist.setText("Unknown");
+            }
+        } catch (IOException | UnsupportedTagException | NullPointerException | InvalidDataException e) {
+            Log.e("Setup Track",e.toString());
         }
     }
 
@@ -168,7 +185,10 @@ public class MainActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             MusicServiceBinder binder = (MusicServiceBinder) service;
             musicService = binder.getService();
+            Log.d("MusicConnection", musicService.toString()+" Starting");
             isBound = true;
+            setupProgressBarThread();
+            setupTrackInfo();
         }
         @Override
         public void onServiceDisconnected(ComponentName name) {
@@ -176,27 +196,30 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    //Thread related stuff
+    //Thread related stuff/////////////////////////////////////////////////////////////////////
     private Handler handler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
-            if((musicService.getMp3Player().getProgress() / 1000) < trackProgress.getMax()){
+            if(!isSeekBarSelected){
                 trackProgress.setProgress(musicService.getMp3Player().getProgress() / 1000);
-                int seconds = (musicService.getMp3Player().getProgress()/1000) % 60;
-                int minutes = (musicService.getMp3Player().getProgress()/1000) / 60;
-                timeProgressed.setText(String.format("%02d:%02d", minutes, seconds));
-            }else{
-                stopTrack();
+                updateTimeText();
             }
             return true;
         }
     });
 
+    private void updateTimeText(){
+        int seconds = (trackProgress.getProgress()) % 60;
+        int minutes = (trackProgress.getProgress()) / 60;
+        timeProgressed.setText(String.format("%02d:%02d", minutes, seconds));
+    }
+
+
     private void setupProgressBarThread(){
         Runnable runnableThread = new Runnable() {
             @Override
             public void run() {
-                while (true){
+                while (isActivityActive){
                     try {
                         Thread.sleep(500);
                         handler.sendEmptyMessage(0);
@@ -210,7 +233,7 @@ public class MainActivity extends AppCompatActivity {
             trackThread = new Thread(runnableThread);
             trackThread.start();
         }
-        Log.d("Thread:","Track Progress: "+trackThread.getName());
+        Log.d("Thread:","Track Progress: "+trackThread.isAlive());
     }
 
 }
