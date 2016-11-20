@@ -32,8 +32,8 @@ import hird.nick.psynh1.mp3player.MusicService.MusicServiceBinder;
 public class MainActivity extends AppCompatActivity {
 
     //Bound Service
-    MusicService musicService;
-    boolean isBound = false;
+    private MusicService musicService;
+    private boolean isBound = false;
 
     //Music Tracks
     private ListView trackList;
@@ -46,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
     //Private thread
     private Thread trackThread;
     boolean isSeekBarSelected = false;
-    boolean isActivityActive = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -219,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
         Runnable runnableThread = new Runnable() {
             @Override
             public void run() {
-                while (isActivityActive){
+                while (isBound){
                     try {
                         Thread.sleep(500);
                         handler.sendEmptyMessage(0);
